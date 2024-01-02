@@ -29,8 +29,6 @@ public class MazeGenerator : MonoBehaviour
 
     private void generateMaze(int[,] cells)
     {
-        float[] probStopping = {0f, 0f, 0.3f, 0.7f, 1f};
-        float[] probBranchStopping = {0f, 0.5f, 1f};
         while (true) {
             List<Tuple<int, int>> candidateLeftCells = leftMostCells(cells);
             foreach (Tuple<int, int> cell in candidateLeftCells) print(cell.Item1 + " " + cell.Item2);
@@ -41,8 +39,9 @@ public class MazeGenerator : MonoBehaviour
             bool branching = false;
             int size = 0;
             while (true) {
-                if ((branching && probBranchStopping[size] <= UnityEngine.Random.Range(0f, 1f)) || probStopping[size] <= UnityEngine.Random.Range(0f, 1f)) break;
-                if ((branching && size > 2) || size > 4) break;
+                probBreaking = branching? probBranchStopping[size] : probStopping[size];
+                if (UnityEngine.Random.Range(0f, 1f) <= probBreaking) break;
+                // if ((branching && size > 2) || (size > 4)) break;
                 List<int> candidateOpenCells = adjacentOpenCells(cells, currentCell);
                 size++;
                 if (candidateOpenCells.Count == 0) {
@@ -52,6 +51,7 @@ public class MazeGenerator : MonoBehaviour
                     branching = true;
                     continue;
                 }
+                size++;
                 lastCell = currentCell;
                 int dir = candidateOpenCells[UnityEngine.Random.Range(0, candidateOpenCells.Count - 1)];
                 switch (dir) {
