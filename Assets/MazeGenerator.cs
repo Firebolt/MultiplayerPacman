@@ -10,6 +10,7 @@ public class MazeGenerator : MonoBehaviour
     public Sprite floorSprite;
     private float[] probStopping = {0f, 0f, 0.3f, 0.7f, 1f};
     private float[] probBranchStopping = {0f, 0.5f, 1f};
+    private float probBranching = 0.7f;
     private void Start() {
         int[,] cells = new int[numRows, numCols];
         initializeCells(cells);
@@ -40,31 +41,74 @@ public class MazeGenerator : MonoBehaviour
         while (true) {
             List<Tuple<int, int>> candidateLeftCells = leftMostCells(cells);
             if (candidateLeftCells.Count == 0) break;
-            Tuple<int, int> center = candidateLeftCells[UnityEngine.Random.Range(0, candidateLeftCells.Count - 1)];
-            Tuple<int, int> lastCell = center;
-            Tuple<int, int> currentCell = center;
-            bool branching = false;
+            Tuple<int, int> currentCell = candidateLeftCells[UnityEngine.Random.Range(0, candidateLeftCells.Count - 1)];
+            List<Tuple<int, int>> possibleBranchPoints = new List<Tuple<int, int>>();
+            bool branching = false, done = false;
             int size = 0, branchSize = 0;
-            float probBreaking;
-            // cells[center.Item1, center.Item2] = 1;
-            while (true) {
-                probBreaking = branching? probBranchStopping[branchSize] : probStopping[size];
+            List<int> candidateOpenCells = adjacentOpenCells(cells, currentCell);
+            int dir;
+            if (candidateOpenCells.Count != 0) {
+                if (candidateOpenCells.Count > 1) possibleBranchPoints.Add(currentCell);
+                dir = candidateOpenCells[UnityEngine.Random.Range(0, candidateOpenCells.Count)];
+            } else {
+                cells[currentCell.Item1, currentCell.Item2] = 0;
+                continue;
+            }
+            while (!done) {
+                float probBreaking = branching? probBranchStopping[branchSize] : probStopping[size];
                 if (UnityEngine.Random.Range(0f, 1f) <= probBreaking) break;
-                List<int> candidateOpenCells = adjacentOpenCells(cells, currentCell);
-                if (branching) branchSize++; else size++;
-                if (candidateOpenCells.Count == 0) {
-                    if (cells[currentCell.Item1, currentCell.Item2] == -1) {
-                        cells[currentCell.Item1, currentCell.Item2] = 0;
+                //if reached end of map or used cell, try branching
+                switch (dir){
+                    case UP:
+                        if (!branching && size > 0 && UnityEngine.Random.Range(0f, 1f) <= probBranching && possibleBranchPoints.Count > 0) {
+                            currentCell = possibleBranchPoints[UnityEngine.Random.Range(0, possibleBranchPoints.Count - 1)];
+                            branching = true;
+                            candidateOpenCells = adjacentOpenCells(cells, currentCell);
+                            dir = candidateOpenCells[UnityEngine.Random.Range(0, candidateOpenCells.Count)];
+                            continue;
+                        } else if (currentCell.Item1 == cells.GetLength(0) - 1 || cells[currentCell.Item1 + 1, currentCell.Item2] != -1) {
+                            done = true;
+                            continue;
+                        }
                         break;
-                    } else if (currentCell.Equals(lastCell)) break;
-                    else {
-                        currentCell = lastCell;
-                        branching = true;
-                        continue;
-                    }
+                    case RIGHT:
+                        if (!branching && size > 0 && UnityEngine.Random.Range(0f, 1f) <= probBranching && possibleBranchPoints.Count > 0) {
+                            currentCell = possibleBranchPoints[UnityEngine.Random.Range(0, possibleBranchPoints.Count - 1)];
+                            branching = true;
+                            candidateOpenCells = adjacentOpenCells(cells, currentCell);
+                            dir = candidateOpenCells[UnityEngine.Random.Range(0, candidateOpenCells.Count)];
+                            continue;
+                        } else if (currentCell.Item2 == cells.GetLength(1) - 1 || cells[currentCell.Item1, currentCell.Item2 + 1] != -1) {
+                            done = true;
+                            continue;
+                        }
+                        break;
+                    case DOWN:
+                        if (!branching && size > 0 && UnityEngine.Random.Range(0f, 1f) <= probBranching && possibleBranchPoints.Count > 0) {
+                            currentCell = possibleBranchPoints[UnityEngine.Random.Range(0, possibleBranchPoints.Count - 1)];
+                            branching = true;
+                            candidateOpenCells = adjacentOpenCells(cells, currentCell);
+                            dir = candidateOpenCells[UnityEngine.Random.Range(0, candidateOpenCells.Count)];
+                            continue;
+                        } else if (currentCell.Item1 == 0 || cells[currentCell.Item1 - 1, currentCell.Item2] != -1) {
+                            done = true;
+                            continue;
+                        }
+                        break;
+                    case LEFT:
+                        if (!branching && size > 0 && UnityEngine.Random.Range(0f, 1f) <= probBranching && possibleBranchPoints.Count > 0) {
+                            currentCell = possibleBranchPoints[UnityEngine.Random.Range(0, possibleBranchPoints.Count - 1)];
+                            branching = true;
+                            candidateOpenCells = adjacentOpenCells(cells, currentCell);
+                            dir = candidateOpenCells[UnityEngine.Random.Range(0, candidateOpenCells.Count)];
+                            continue;
+                        } else if (currentCell.Item1 == 0 || cells[currentCell.Item1, currentCell.Item2 - 1] != -1) {
+                            done = true;
+                            continue;
+                        }
+                        break;
                 }
-                lastCell = currentCell;
-                int dir = candidateOpenCells[UnityEngine.Random.Range(0, candidateOpenCells.Count)];
+                if (branching) branchSize++; else size++;
                 if (cells[currentCell.Item1, currentCell.Item2] == -1) cells[currentCell.Item1, currentCell.Item2] = 0;
                 switch (dir) {
                     case UP:
@@ -92,6 +136,8 @@ public class MazeGenerator : MonoBehaviour
                         cells[currentCell.Item1, currentCell.Item2] += RIGHT;
                         break;
                 }
+                if (adjacentOpenCells(cells, currentCell).Count > 1)
+                    possibleBranchPoints.Add(currentCell);
             }
         }
     }
@@ -110,7 +156,6 @@ public class MazeGenerator : MonoBehaviour
                 map[bottomLefty, bottomLeftx + 2] = -1;
                 map[bottomLefty + 1, bottomLeftx + 2] = -1;
                 map[bottomLefty + 2, bottomLeftx + 2] = -1;
-                print(i + "," + j + ": " + cells[i, j]);
                 switch (cells[i, j]) {
                     case 1:
                         map[bottomLefty + 1, bottomLeftx] = UP + RIGHT;
@@ -195,9 +240,9 @@ public class MazeGenerator : MonoBehaviour
                         map[bottomLefty + 1, bottomLeftx] = UP + RIGHT + LEFT;
                         map[bottomLefty + 1, bottomLeftx + 1] = UP + RIGHT + LEFT;
                         map[bottomLefty + 1, bottomLeftx + 2] = UP + RIGHT + LEFT;
-                        map[bottomLefty + 2, bottomLeftx] = DOWN + RIGHT + LEFT + UP;
-                        map[bottomLefty + 2, bottomLeftx + 1] = DOWN + RIGHT + LEFT + UP;
-                        map[bottomLefty + 2, bottomLeftx + 1] = DOWN + RIGHT + LEFT + UP;
+                        map[bottomLefty + 2, bottomLeftx] = UP + DOWN + RIGHT + LEFT;
+                        map[bottomLefty + 2, bottomLeftx + 1] = UP + DOWN + RIGHT + LEFT;
+                        map[bottomLefty + 2, bottomLeftx + 2] = DOWN + RIGHT + LEFT;
                         break;
                     case 12:
                         map[bottomLefty, bottomLeftx] = UP + RIGHT + DOWN;
@@ -216,23 +261,24 @@ public class MazeGenerator : MonoBehaviour
                         map[bottomLefty + 2, bottomLeftx + 1] = UP + DOWN + LEFT;
                         break;
                     case 14:
-                        map[bottomLefty, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
-                        map[bottomLefty, bottomLeftx + 1] = UP + RIGHT + DOWN + LEFT;
-                        map[bottomLefty, bottomLeftx + 2] = UP + RIGHT + DOWN + LEFT;
-                        map[bottomLefty + 1, bottomLeftx] = RIGHT + DOWN + LEFT;
-                        map[bottomLefty + 1, bottomLeftx + 1] = RIGHT + DOWN + LEFT;
-                        map[bottomLefty + 1, bottomLeftx + 2] = RIGHT + DOWN + LEFT;
+                        map[bottomLefty, bottomLeftx] = UP + RIGHT + DOWN;
+                        map[bottomLefty, bottomLeftx + 1] = UP + DOWN + LEFT;
+                        map[bottomLefty + 1, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 1, bottomLeftx + 1] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 1, bottomLeftx + 2] = UP + RIGHT + LEFT;
+                        map[bottomLefty + 2, bottomLeftx] = RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 2, bottomLeftx + 1] = RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 2, bottomLeftx + 2] = RIGHT + DOWN + LEFT;
                         break;
                     case 15:
                         map[bottomLefty, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
-                        map[bottomLefty, bottomLeftx + 1] = UP + RIGHT + DOWN + LEFT;
-                        map[bottomLefty, bottomLeftx + 2] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty, bottomLeftx + 1] = UP + DOWN + LEFT;
                         map[bottomLefty + 1, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
                         map[bottomLefty + 1, bottomLeftx + 1] = UP + RIGHT + DOWN + LEFT;
                         map[bottomLefty + 1, bottomLeftx + 2] = UP + RIGHT + DOWN + LEFT;
                         map[bottomLefty + 2, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
                         map[bottomLefty + 2, bottomLeftx + 1] = UP + RIGHT + DOWN + LEFT;
-                        map[bottomLefty + 2, bottomLeftx + 2] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 2, bottomLeftx + 2] = RIGHT + DOWN + LEFT;
                     break;
                     default: // case 0
                         map[bottomLefty + 1, bottomLeftx] = UP + RIGHT;
