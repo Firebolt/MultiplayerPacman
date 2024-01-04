@@ -215,7 +215,26 @@ public class MazeGenerator : MonoBehaviour
                         map[bottomLefty + 2, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
                         map[bottomLefty + 2, bottomLeftx + 1] = UP + DOWN + LEFT;
                         break;
-                    default:
+                    case 14:
+                        map[bottomLefty, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty, bottomLeftx + 1] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty, bottomLeftx + 2] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 1, bottomLeftx] = RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 1, bottomLeftx + 1] = RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 1, bottomLeftx + 2] = RIGHT + DOWN + LEFT;
+                        break;
+                    case 15:
+                        map[bottomLefty, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty, bottomLeftx + 1] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty, bottomLeftx + 2] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 1, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 1, bottomLeftx + 1] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 1, bottomLeftx + 2] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 2, bottomLeftx] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 2, bottomLeftx + 1] = UP + RIGHT + DOWN + LEFT;
+                        map[bottomLefty + 2, bottomLeftx + 2] = UP + RIGHT + DOWN + LEFT;
+                    break;
+                    default: // case 0
                         map[bottomLefty + 1, bottomLeftx] = UP + RIGHT;
                         map[bottomLefty + 1, bottomLeftx + 1] = UP + LEFT;
                         map[bottomLefty + 2, bottomLeftx] = DOWN + RIGHT;
