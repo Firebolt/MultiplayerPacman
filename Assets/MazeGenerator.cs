@@ -11,7 +11,7 @@ public class MazeGenerator : MonoBehaviour
     public Tilemap tilemap;
     public TileBase tileBase, floorSprite;
     private float[] probStopping = {0f, 0f, 0.3f, 0.7f, 1f}, probBranchStopping = {0f, 0.5f, 1f};
-    private float probBranching = 0.7f, probWallMerging = 1f;
+    private float probBranching = 0.7f, probWallMerging = 0.7f;
     private void Start() {
         int[,] cells = new int[numRows, numCols];
         initializeCells(cells);
