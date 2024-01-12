@@ -11,7 +11,7 @@ public class MazeGenerator : MonoBehaviour
     public Tilemap tilemap;
     public TileBase tileBase, floorSprite;
     private float[] probStopping = {0f, 0f, 0.3f, 0.7f, 1f}, probBranchStopping = {0f, 0.5f, 1f};
-    private float probBranching = 0.7f, probWallMerging = 0.7f;
+    private float probBranching = 0.7f, probWallMerging = 0.7f, probTunnel = 0.1f;
     private void Start() {
         int[,] cells = new int[numRows, numCols];
         initializeCells(cells);
@@ -146,12 +146,12 @@ public class MazeGenerator : MonoBehaviour
     private int[,] cellToMap(int[,] cells)
     {
         int numRows = cells.GetLength(0), numCols = cells.GetLength(1);
-        int mapRows = (numRows * 3) + 3, mapCols = numCols * 3 + 1;
+        int mapRows = (numRows * 3) + 5, mapCols = numCols * 3 + 2;
         int[,] map = new int[mapRows, mapCols];
         for (int i = 0; i < numRows; i++)
             for (int j = 0; j < numCols; j++)
             {
-                int bottomLefty = (i * 3) + 1, bottomLeftx = j * 3;
+                int bottomLefty = (i * 3) + 2, bottomLeftx = j * 3;
                 //Bottom and right edge are paths by default
                 map[bottomLefty, bottomLeftx] = map[bottomLefty, bottomLeftx + 1] = -1;
                 map[bottomLefty, bottomLeftx + 2] = map[bottomLefty + 1, bottomLeftx + 2] = map[bottomLefty + 2, bottomLeftx + 2] = -1;
@@ -218,8 +218,8 @@ public class MazeGenerator : MonoBehaviour
         
         //Top path, and top and bottom outer walls of map
         for (int i = 0; i < mapCols - 1; i++) {
-            map[mapRows - 2, i] = (map[mapRows - 3, i] == 1)? 0: -1;
-            map[mapRows - 1, i] = map[0, i] = 0;
+            map[mapRows - 3, i] = (map[mapRows - 4, i] == 1)? 0: -1;
+            map[mapRows - 2, i] = map[mapRows - 1, i] = map[0, i] = 0;
         }
         
         //Outer wall corners of map
@@ -227,7 +227,7 @@ public class MazeGenerator : MonoBehaviour
 
         //Right and left outer wall of map
         for (int i = 1; i < mapRows - 1; i++)
-            map[i, mapCols - 1] = 0;
+            map [i, mapCols - 2] = map[i, mapCols - 1] = 0;
 
         int ghostSpawny = mapRows / 2 - 2;
         //Below ghost spawn
@@ -248,6 +248,26 @@ public class MazeGenerator : MonoBehaviour
             map[i, 4] = 0;
         for (int i = 0; i < 5; i++)
             map[ghostSpawny, i] = map[ghostSpawny + 4, i] = 0;
+
+        //Make first tunnel
+        while (true) {
+            int possibleTunnelRow = UnityEngine.Random.Range(2, mapRows - 2);
+            if (map[possibleTunnelRow, mapCols - 3] != 0) {
+                map[possibleTunnelRow, mapCols - 2] = -1;
+                break;
+            }
+        }
+        
+        //Check probability for second tunnel
+        if (UnityEngine.Random.Range(0f, 1f) <= probTunnel)
+            while (true) {
+                int possibleTunnelRow = UnityEngine.Random.Range(2, mapRows - 2);
+                if (map[possibleTunnelRow, mapCols - 3] != 0 && map[possibleTunnelRow, mapCols - 2] != -1) {
+                    map[possibleTunnelRow, mapCols - 2] = -1;
+                    break;
+                }
+            }
+
         return map;
     }
 
